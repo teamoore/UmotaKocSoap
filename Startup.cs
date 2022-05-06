@@ -36,9 +36,11 @@ namespace UmotaKocSoap
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Hello World!");
+                    await context.Response.WriteAsync("Umota SOAP Service");
                 });
-                endpoints.UseSoapEndpoint<KocService>("/KocServicePath.asmx", new SoapEncoderOptions(), SoapSerializer.DataContractSerializer);
+                endpoints.UseSoapEndpoint<KocService>("/KocServicePath.asmx",  new SoapEncoderOptions() { 
+                    WriteEncoding = System.Text.Encoding.UTF8
+                }, SoapSerializer.XmlSerializer);
             });
         }
     }
