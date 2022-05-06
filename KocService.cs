@@ -12,6 +12,7 @@ using UmotaKocSoap.Shared;
 namespace UmotaKocSoap
 {
     [ServiceContract]
+    [Serializable]
     public class KocService
     {
         [OperationContract]
@@ -20,7 +21,7 @@ namespace UmotaKocSoap
             var url = @"https://e700091-iflmap.hcisbt.eu2.hana.ondemand.com/http/kocec_fodepartment_dev?externalCode='" + externalCode + "'";
             HttpClient http = new HttpClient();
             http.DefaultRequestHeaders.Authorization = new BasicAuthenticationHeaderValue("S0023446469", "Vakif@1969");
-
+            
             var data = await http.GetAsync(url);
 
             var result = data.Content.ReadAsStringAsync().Result;

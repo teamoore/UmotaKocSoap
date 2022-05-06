@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace UmotaKocSoap.Shared
 {
+    [Serializable]
     public class Department
     {
         public string externalCode { get; set; }
