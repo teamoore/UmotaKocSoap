@@ -52,7 +52,9 @@ namespace UmotaKocSoap
             HttpClient http = new HttpClient();
             http.DefaultRequestHeaders.Authorization = new BasicAuthenticationHeaderValue("S0023446469", "Vakif@1969");
 
-            var data = await http.GetAsync(url);
+            var jsonInString = "{}";
+
+            var data = await http.PostAsync(url, new StringContent(jsonInString, Encoding.UTF8, "application/json"));
 
             var result = data.Content.ReadAsStringAsync().Result;
 
