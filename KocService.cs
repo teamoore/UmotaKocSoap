@@ -16,7 +16,7 @@ namespace UmotaKocSoap
     public class KocService
     {
         [OperationContract]
-        public async Task<List<Department>> GetDepartment(string externalCode)
+        public async Task<Department> GetDepartment(string externalCode)
         {
             var url = @"https://e700091-iflmap.hcisbt.eu2.hana.ondemand.com/http/kocec_fodepartment_dev?externalCode='" + externalCode + "'";
             HttpClient http = new HttpClient();
@@ -28,50 +28,56 @@ namespace UmotaKocSoap
 
             var response = JsonConvert.DeserializeObject<dynamic>(result)!;
 
-            var departmentlist = new List<Department>();
+            var department = new Department();
 
             if (response.d.results.Count == 1)
             {
-                var department = new Department();
                 department.externalCode = response.d.results[0].externalCode;
                 department.startDate = response.d.results[0].startDate;
                 department.name_tr_TR = response.d.results[0].name_tr_TR;
                 department.cust_Dep_OrgUnt = response.d.results[0].cust_Dep_OrgUnt;
                 department.cust_Dep_Company = response.d.results[0].cust_Dep_Company;
                 department.status = response.d.results[0].status;
-                departmentlist.Add(department);
             }
 
-            return departmentlist;
+            return department;
         }
 
         [OperationContract]
-        public async Task<KocResponseDto> SaveDepartment()
+        public async Task<SaveResponseDto> SaveDepartment(Department department)
         {
             var url = @"https://e700091-iflmap.hcisbt.eu2.hana.ondemand.com/http/kocec_fodepartment_dev";
             HttpClient http = new HttpClient();
             http.DefaultRequestHeaders.Authorization = new BasicAuthenticationHeaderValue("S0023446469", "Vakif@1969");
 
-            var jsonInString = "{}";
+            department.__metadata = new metadata();
+            department.__metadata.uri = @"https://api012.successfactors.eu/odata/v2/FODepartment(externalCode='" + department.externalCode + "',startDate=datetime'" + department.startDate.Year + "-" + department.startDate.Month.ToString("00") + "-" + department.startDate.Day.ToString("00") + "T00:00:00')";
+            department.__metadata.type = "SFOData.FODepartment";
+
+            JsonSerializerSettings microsoftDateFormatSettings = new JsonSerializerSettings { DateFormatHandling = DateFormatHandling.MicrosoftDateFormat };
+            string jsonInString = JsonConvert.SerializeObject(department, microsoftDateFormatSettings);
+
+            SaveResponseDto saveResponse = new SaveResponseDto();
 
             var data = await http.PostAsync(url, new StringContent(jsonInString, Encoding.UTF8, "application/json"));
 
-            var result = data.Content.ReadAsStringAsync().Result;
-
-
-            var response = JsonConvert.DeserializeObject<dynamic>(result)!;
-
-            var koc = new KocResponseDto();
-
-            if (response.d.results.count > 0)
+            if (data.StatusCode == System.Net.HttpStatusCode.Created)
             {
-                koc.createdOn = response.d.results[0].createdOn;
-                koc.cust_Dep_GM_defaultValue = response.d.results[0].cust_Dep_GM_defaultValue;
-                koc.cust_Dep_GrpPresid = response.d.results[0].cust_Dep_GrpPresid;
-                koc.externalCode = response.d.results[0].externalCode;
+                saveResponse.Status = 201;
+                saveResponse.externalCode = department.externalCode;
+                saveResponse.ErrorText = "Aktarıldı";
+            } 
+            else
+            {
+                saveResponse.Status = (int)data.StatusCode;
+                saveResponse.externalCode = department.externalCode;
+                saveResponse.ErrorText = "Bad Request";
+                var result = data.Content.ReadAsStringAsync().Result;
+                saveResponse.ErrorText = result;
+                //var response = JsonConvert.DeserializeObject<dynamic>(result)!;
             }
 
-            return koc;
+            return saveResponse;
 
         }
     }
