@@ -7,6 +7,8 @@ using System.Net.Http.Headers;
 using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
 using UmotaKocSoap.Shared;
 
 namespace UmotaKocSoap
@@ -63,22 +65,51 @@ namespace UmotaKocSoap
 
             if (data.StatusCode == System.Net.HttpStatusCode.Created)
             {
-                saveResponse.Status = 201;
-                saveResponse.externalCode = department.externalCode;
-                saveResponse.ErrorText = "Aktarıldı";
+                saveResponse.Status = "OK";
+                saveResponse.Message = "";
             } 
             else
             {
-                saveResponse.Status = (int)data.StatusCode;
-                saveResponse.externalCode = department.externalCode;
-                saveResponse.ErrorText = "Bad Request";
+                saveResponse.Status = "ERROR";
                 var result = data.Content.ReadAsStringAsync().Result;
-                saveResponse.ErrorText = result;
-                //var response = JsonConvert.DeserializeObject<dynamic>(result)!;
+                saveResponse.Message = result;
             }
 
             return saveResponse;
+        }
 
+        [OperationContract]
+        public async Task<SaveResponseDto> UpdateDepartment(Department department)
+        {
+            var url = @"https://e700091-iflmap.hcisbt.eu2.hana.ondemand.com/http/kocec_UPSERT_DEV";
+            HttpClient http = new HttpClient();
+            http.DefaultRequestHeaders.Authorization = new BasicAuthenticationHeaderValue("S0023446469", "Vakif@1969");
+
+            department.__metadata = new metadata();
+            department.__metadata.uri = "FODepartment";
+            department.__metadata.type = "SFOData.FODepartment";
+
+            JsonSerializerSettings microsoftDateFormatSettings = new JsonSerializerSettings { DateFormatHandling = DateFormatHandling.MicrosoftDateFormat };
+            string jsonInString = JsonConvert.SerializeObject(department, microsoftDateFormatSettings);
+
+            SaveResponseDto saveResponse = new SaveResponseDto();
+
+            var data = await http.PostAsync(url, new StringContent(jsonInString, Encoding.UTF8, "application/json"));
+
+            string resultContent = data.Content.ReadAsStringAsync().Result;
+            
+            if (resultContent.Contains("status>OK<"))
+            {
+                saveResponse.Status = "OK";
+                saveResponse.Message = "";
+            }
+            else
+            {
+                saveResponse.Status = "ERROR";
+                saveResponse.Message = resultContent;
+            }
+
+            return saveResponse;
         }
     }
 }

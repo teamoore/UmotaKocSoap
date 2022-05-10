@@ -7,8 +7,7 @@ namespace UmotaKocSoap.Shared
 {
     public class SaveResponseDto
     {
-        public string externalCode { get; set; }
-        public int Status { get; set; }
-        public string ErrorText { get; set; }
+        public string Status { get; set; }
+        public string Message { get; set; }
     }
 }
